@@ -6,9 +6,6 @@
 #include "frontend/frontend.h"
 #include "memory_system/memory_system.h"
 
-namespace NDPSim {
-
-
 void Ramulator2::init() {
   cycle_count = 0;
   num_reads = 0;
@@ -78,7 +75,7 @@ void Ramulator2::cycle() {
       return_queue.push(mf);
     };
     bool success = ramulator2_frontend->receive_external_requests(
-        mf->is_write() ? 1 : 0, mf->addr, 0, callback);
+        mf->is_write() ? 1 : 0, mf->get_addr(), 0, callback);
     if(success)
       request_queue.pop();
   }
@@ -103,5 +100,3 @@ void Ramulator2::cycle() {
 void Ramulator2::print(FILE* fp) {
   finish();
 }
-
-}  // namespace NDPSim

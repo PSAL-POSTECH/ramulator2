@@ -89,11 +89,11 @@ endif()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 add_library(ramulator SHARED 
-resources/ndp_wrappers/ramulator2.cc
-resources/ndp_wrappers/ramulator2.hh)
+resources/wrappers/ramulator2.cc
+resources/wrappers/ramulator2.hh)
 
 target_include_directories(ramulator 
-PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/resources/ndp_wrappers
+PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/resources/wrappers
 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 

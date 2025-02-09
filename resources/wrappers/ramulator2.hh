@@ -8,22 +8,12 @@
 #include <unordered_map>
 #include <vector>
 #include <cstdint>
+#include "Memfetch.h"
 // Forward declare Ramulator2 top-level components
 namespace Ramulator {
 class IFrontEnd;
 class IMemorySystem;
 }  // namespace Ramulator
-
-namespace NDPSim {
-struct mem_fetch {
-  uint64_t addr;
-  bool write;
-  bool request;
-  void* origin_data;
-  int size;
-  void set_reply() { request = false; }
-  bool is_write() const { return write; }
-};
 
 class Ramulator2 {
  public:
@@ -77,5 +67,4 @@ class Ramulator2 {
   int tot_writes;
 };
 
-}  // namespace NDPSim
 #endif  // __RAMULATOR2_HH__
