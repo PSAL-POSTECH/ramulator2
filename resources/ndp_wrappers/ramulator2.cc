@@ -31,6 +31,10 @@ bool Ramulator2::full() const {
   return request_queue.size() >= 256;
 }
 
+bool Ramulator2::full(int i) const {
+  return request_queue.size() + i >= 256;
+}
+
 void Ramulator2::push(mem_fetch* mf) {
   request_queue.push(mf);
 }

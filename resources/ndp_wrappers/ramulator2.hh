@@ -40,6 +40,7 @@ class Ramulator2 {
   }
   void init();
   bool full() const;
+  bool full(int i) const;
   void cycle();
   void finish();
   void print(FILE *fp = NULL);
