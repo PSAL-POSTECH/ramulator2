@@ -46,6 +46,9 @@ mem_fetch* Ramulator2::return_queue_pop() {
 void Ramulator2::finish() {
   ramulator2_frontend->finalize();
   ramulator2_memorysystem->finalize();
+  if (cycle_count == 0)
+    return;
+
   if(memory_id == 0) {
     spdlog::info("{}: avg BW utilization {}% ({} reads, {} writes)", std_name,
                 (tot_reads + tot_writes) * 100 * nbl / (cycle_count), tot_reads,
