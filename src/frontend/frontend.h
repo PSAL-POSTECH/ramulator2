@@ -31,16 +31,18 @@ class IFrontEnd : public Clocked<IFrontEnd>, public TopLevel<IFrontEnd> {
 
     virtual bool is_finished() = 0;
 
-    virtual void finalize() { 
+    virtual void finalize(bool dump_stat=false) {
       for (auto component : m_components) {
         component->finalize();
       }
 
-      YAML::Emitter emitter;
-      emitter << YAML::BeginMap;
-      m_impl->print_stats(emitter);
-      emitter << YAML::EndMap;
-      std::cout << emitter.c_str() << std::endl;
+      if (dump_stat) {
+        YAML::Emitter emitter;
+        emitter << YAML::BeginMap;
+        m_impl->print_stats(emitter);
+        emitter << YAML::EndMap;
+        std::cout << emitter.c_str() << std::endl;
+      }
     };
 
     virtual int get_num_cores() { return 1; };

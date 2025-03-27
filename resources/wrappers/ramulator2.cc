@@ -44,21 +44,14 @@ mem_fetch* Ramulator2::return_queue_pop() {
 }
 
 void Ramulator2::finish() {
-  ramulator2_frontend->finalize();
-  ramulator2_memorysystem->finalize();
+  ramulator2_frontend->finalize(memory_id == 0);
+  ramulator2_memorysystem->finalize(memory_id == 0);
   if (cycle_count == 0)
     return;
 
-  if(memory_id == 0) {
-    spdlog::info("{}: avg BW utilization {}% ({} reads, {} writes)", std_name,
-                (tot_reads + tot_writes) * 100 * nbl / (cycle_count), tot_reads,
-                tot_writes);
-  }
-  else {
-    spdlog::debug("{}: avg BW utilization {}% ({} reads, {} writes)", std_name,
-                (tot_reads + tot_writes) * 100 * nbl / (cycle_count), tot_reads,
-                tot_writes);
-  }
+  spdlog::info("{}: avg BW utilization {}% ({} reads, {} writes)", std_name,
+              (tot_reads + tot_writes) * 100 * nbl / (cycle_count), tot_reads,
+              tot_writes);
   num_reads = 0;
   num_writes = 0;
 }
