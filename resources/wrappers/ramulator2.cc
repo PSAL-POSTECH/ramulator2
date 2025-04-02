@@ -50,7 +50,7 @@ void Ramulator2::finish() {
     return;
 
   spdlog::info("{}: avg BW utilization {}% ({} reads, {} writes)", std_name,
-              (tot_reads + tot_writes) * 100 * nbl / (cycle_count), tot_reads,
+              (tot_reads + tot_writes) * 100 * nbl / (2 * cycle_count), tot_reads,
               tot_writes);
   num_reads = 0;
   num_writes = 0;
@@ -80,12 +80,12 @@ void Ramulator2::cycle() {
     if(memory_id == 0)
       spdlog::info("{}: BW utilization {}% ({} reads, {} writes)",
                   std_name,
-                  (num_reads + num_writes) * 100 *nbl / (log_interval),
+                  (num_reads + num_writes) * 100 *nbl / (2 * log_interval),
                   num_reads, num_writes);
     else
       spdlog::debug("{}: BW utilization {}% ({} reads, {} writes)",
                   std_name,
-                  (num_reads + num_writes) * 100 *nbl / (log_interval),
+                  (num_reads + num_writes) * 100 *nbl / (2 * log_interval),
                   num_reads, num_writes);
     num_reads = 0;
     num_writes = 0;
