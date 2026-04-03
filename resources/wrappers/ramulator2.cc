@@ -20,18 +20,21 @@ void Ramulator2::init() {
 
   // Override frontend to ExternalFrontEnd which exposes receive_external_requests().
   // PyTorchSim drives the simulation externally, so GEM5/trace frontends must not be used.
+  // Override frontend to ExternalFrontEnd which exposes receive_external_requests().
+  // PyTorchSim drives the simulation externally.
   Ramulator::ConfigNode frontend_config;
   frontend_config.set("impl", std::string("External"));
   frontend_config.set("clock_ratio", 1);
-  config.set("Frontend", frontend_config);
+  config.set("frontend", frontend_config);
 
   ramulator2_frontend = Ramulator::Factory::create_frontend(config);
   ramulator2_memorysystem = Ramulator::Factory::create_memory_system(config);
   ramulator2_frontend->connect_memory_system(ramulator2_memorysystem);
   ramulator2_memorysystem->connect_frontend(ramulator2_frontend);
 
+  // Extract memory system impl name for logging
   std::string impl_name =
-      config["MemorySystem"]["DRAM"]["impl"].as<std::string>(std::string("DRAM"));
+      config["memory_system"]["impl"].as<std::string>(std::string("DRAM"));
   std_name = impl_name + "-CH_" + std::to_string(memory_id);
 }
 

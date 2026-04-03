@@ -190,4 +190,13 @@ LPDDR5.timing_presets = {
         "nWTRS": 5, "nWTRL": 10, "nWCKPST": 1, "nCAS": 0,
         "nAAD": 8, "nCS": 2, "tCK_ps": 1250,
     },
+    # LPDDR5X-8533 (tCK = 938 ps, CK = 1066 MHz)
+    # nRRDS/nRRDL/nFAW/nRFC/nREFI derived from tCK_ps by resolve_secondary_timings()
+    "LPDDR5X_8533": {
+        "rate": 8533, "nBL": 2, "nCL": 26, "nRCD": 20, "nRP": 20, "nRPab": 32,
+        "nRAS": 45, "nRC": 65, "nWR": 37, "nRTP": 6, "nCWL": 12, "nPPD": 2,
+        "nCCDS": 2, "nCCDL": 4, "nCCDS_WR": 2, "nCCDL_WR": 4,
+        "nWTRS": 7, "nWTRL": 13, "nWCKPST": 1, "nCAS": 0,
+        "nAAD": 8, "nCS": 2, "tCK_ps": 938,
+    },
 }
