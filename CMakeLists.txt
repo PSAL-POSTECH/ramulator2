@@ -12,10 +12,12 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 message("Configuring ${CMAKE_PROJECT_NAME} ${CMAKE_PROJECT_Version}...")
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DRAMULATOR_DEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DRAMULATOR_DEBUG -ggdb")
 # set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-###############################
+
+# Pick up Conan-provided headers (spdlog, etc.) when built as part of TOGSim
+include_directories(${CMAKE_INCLUDE_PATH})
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 
@@ -52,7 +54,7 @@ FetchContent_MakeAvailable(fmt)
 include_directories(${fmt_SOURCE_DIR}/include)
 message("Done configuring fmt.")
 
-option(RAMULATOR_PYTHON_BINDINGS "Build Python nanobind bindings" ON)
+option(RAMULATOR_PYTHON_BINDINGS "Build Python nanobind bindings" OFF)
 if(RAMULATOR_PYTHON_BINDINGS)
   find_package(Python 3.10 REQUIRED COMPONENTS Interpreter Development.Module)
 
@@ -70,16 +72,23 @@ endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-add_library(ramulator SHARED)
+add_library(ramulator SHARED
+  resources/wrappers/ramulator2.cc
+  resources/wrappers/ramulator2.hh
+)
 set_target_properties(ramulator PROPERTIES
   LIBRARY_OUTPUT_DIRECTORY  ${PROJECT_SOURCE_DIR}
 )
 # PUBLIC so consumers of the ramulator target get the include path transitively
-target_include_directories(ramulator PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_include_directories(ramulator
+  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/src
+  PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/resources/wrappers
+)
 target_link_libraries(
   ramulator
   PRIVATE fmt::fmt
   PRIVATE yaml-cpp::yaml-cpp
+  PUBLIC ${CONAN_LIBS}
 )
 
 add_subdirectory(src/ramulator)
