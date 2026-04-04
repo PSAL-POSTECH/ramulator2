@@ -20,6 +20,9 @@ class ExternalFrontEnd : public IFrontEnd, public Implementation {
                                  int size_bytes) override {
     Request req(addr, req_type_id, source_id, std::move(callback));
     req.size_bytes = size_bytes;
+    if (req.addr_vec.empty()) {
+      req.addr_vec.push_back(0);
+    }
     return m_memory_system->send(req);
   }
 };

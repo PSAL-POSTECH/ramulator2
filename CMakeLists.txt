@@ -16,9 +16,6 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DRAMULATOR_DEBUG -ggdb")
 # set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-# Pick up Conan-provided headers (spdlog, etc.) when built as part of TOGSim
-include_directories(${CMAKE_INCLUDE_PATH})
-
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 
 set(CMAKE_CXX_STANDARD 20)
@@ -39,9 +36,15 @@ FetchContent_Declare(
   GIT_TAG        yaml-cpp-0.9.0                        
   SOURCE_DIR     ${CMAKE_CURRENT_SOURCE_DIR}/ext/yaml-cpp
 )
+
+# Force vendored yaml-cpp headers to take precedence over inherited Conan paths.
+include_directories(BEFORE ${CMAKE_CURRENT_SOURCE_DIR}/ext/yaml-cpp/include)
+
 FetchContent_MakeAvailable(yaml-cpp)
 include_directories(${yaml-cpp_SOURCE_DIR}/include)
 message("Done configuring yaml-cpp.")
+
+# Conan include paths are already injected by the parent TOGSim project.
 
 message("Configuring fmt...")
 FetchContent_Declare(

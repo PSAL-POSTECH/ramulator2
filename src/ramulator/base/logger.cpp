@@ -1,5 +1,6 @@
 #include "ramulator/base/logger.h"
 
+#include <cstdio>
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -45,19 +46,19 @@ Logger::Logger(Logger&&) noexcept = default;
 Logger& Logger::operator=(Logger&&) noexcept = default;
 
 void Logger::debug(const std::string& msg) {
-  std::cerr << "[" << m_impl->data.name << "] [\033[36mdebug\033[0m] " << msg << "\n";
+  std::fprintf(stderr, "[%s] [\033[36mdebug\033[0m] %s\n", m_impl->data.name.c_str(), msg.c_str());
 }
 
 void Logger::info(const std::string& msg) {
-  std::cerr << "[" << m_impl->data.name << "] [\033[32minfo\033[0m] " << msg << "\n";
+  std::fprintf(stderr, "[%s] [\033[32minfo\033[0m] %s\n", m_impl->data.name.c_str(), msg.c_str());
 }
 
 void Logger::warn(const std::string& msg) {
-  std::cerr << "[" << m_impl->data.name << "] [\033[33mwarn\033[0m] " << msg << "\n";
+  std::fprintf(stderr, "[%s] [\033[33mwarn\033[0m] %s\n", m_impl->data.name.c_str(), msg.c_str());
 }
 
 void Logger::error(const std::string& msg) {
-  std::cerr << "[" << m_impl->data.name << "] [\033[31merror\033[0m] " << msg << "\n";
+  std::fprintf(stderr, "[%s] [\033[31merror\033[0m] %s\n", m_impl->data.name.c_str(), msg.c_str());
 }
 
 bool Logger::should_log_debug() const {
