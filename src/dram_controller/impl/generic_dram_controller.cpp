@@ -8,7 +8,7 @@ class GenericDRAMController final : public IDRAMController, public Implementatio
   private:
     std::deque<Request> pending;          // A queue for read requests that are about to finish (callback after RL)
 
-    ReqBuffer m_active_buffer;            // Buffer for requests being served. This has the highest priority 
+    ReqBuffer m_active_buffer;            // Buffer for requests being served. This has the highest priority
     ReqBuffer m_priority_buffer;          // Buffer for high-priority requests (e.g., maintenance like refresh).
     ReqBuffer m_read_buffer;              // Read request buffer
     ReqBuffer m_write_buffer;             // Write request buffer
@@ -25,6 +25,16 @@ class GenericDRAMController final : public IDRAMController, public Implementatio
     size_t s_num_row_misses = 0;
     size_t s_num_row_conflicts = 0;
 
+    size_t s_read_row_hits = 0;
+    size_t s_read_row_misses = 0;
+    size_t s_read_row_conflicts = 0;
+    size_t s_write_row_hits = 0;
+    size_t s_write_row_misses = 0;
+    size_t s_write_row_conflicts = 0;
+
+    uint64_t s_read_latency_sum = 0;
+    size_t s_read_latency_samples = 0;
+    double s_avg_read_latency = 0.0;
 
   public:
     void init() override {
@@ -32,7 +42,7 @@ class GenericDRAMController final : public IDRAMController, public Implementatio
       m_wr_high_watermark = param<float>("wr_high_watermark").desc("Threshold for switching to write mode.").default_val(0.8f);
 
       m_scheduler = create_child_ifce<IScheduler>();
-      m_refresh = create_child_ifce<IRefreshManager>();    
+      m_refresh = create_child_ifce<IRefreshManager>();
 
       if (m_config["plugins"]) {
         YAML::Node plugin_configs = m_config["plugins"];
@@ -40,6 +50,18 @@ class GenericDRAMController final : public IDRAMController, public Implementatio
           m_plugins.push_back(create_child_ifce<IControllerPlugin>(*it));
         }
       }
+
+      register_stat(s_num_row_hits).name("num_row_hits");
+      register_stat(s_num_row_misses).name("num_row_misses");
+      register_stat(s_num_row_conflicts).name("num_row_conflicts");
+      register_stat(s_read_row_hits).name("read_row_hits");
+      register_stat(s_read_row_misses).name("read_row_misses");
+      register_stat(s_read_row_conflicts).name("read_row_conflicts");
+      register_stat(s_write_row_hits).name("write_row_hits");
+      register_stat(s_write_row_misses).name("write_row_misses");
+      register_stat(s_write_row_conflicts).name("write_row_conflicts");
+      register_stat(s_read_latency_sum).name("read_latency");
+      register_stat(s_avg_read_latency).name("avg_read_latency");
     };
 
     void setup(IFrontEnd* frontend, IMemorySystem* memory_system) override {
@@ -117,10 +139,25 @@ class GenericDRAMController final : public IDRAMController, public Implementatio
           bool row_open = m_dram->check_rowbuffer_open(req_it->final_command, req_it->addr_vec);
           if (row_hit) {
             s_num_row_hits++;
+            if (req_it->type_id == Request::Type::Read) {
+              s_read_row_hits++;
+            } else if (req_it->type_id == Request::Type::Write) {
+              s_write_row_hits++;
+            }
           } else if (row_open) {
             s_num_row_conflicts++;
+            if (req_it->type_id == Request::Type::Read) {
+              s_read_row_conflicts++;
+            } else if (req_it->type_id == Request::Type::Write) {
+              s_write_row_conflicts++;
+            }
           } else {
             s_num_row_misses++;
+            if (req_it->type_id == Request::Type::Read) {
+              s_read_row_misses++;
+            } else if (req_it->type_id == Request::Type::Write) {
+              s_write_row_misses++;
+            }
           }
         }
         // If we find a real request to serve
@@ -149,6 +186,10 @@ class GenericDRAMController final : public IDRAMController, public Implementatio
     };
 
     void finalize() override {
+      s_avg_read_latency = (s_read_latency_samples > 0)
+          ? static_cast<double>(s_read_latency_sum) /
+                static_cast<double>(s_read_latency_samples)
+          : 0.0;
       spdlog::info("Row hits: {}, Row misses: {}, Row conflicts: {}", s_num_row_hits, s_num_row_misses, s_num_row_conflicts);
     }
   private:
@@ -165,9 +206,12 @@ class GenericDRAMController final : public IDRAMController, public Implementatio
         auto& req = pending[0];
         if (req.depart <= m_clk) {
           // Request received data from dram
-          if (req.depart - req.arrive > 1) {
-            // Check if this requests accesses the DRAM or is being forwarded.
-            // TODO add the stats back
+          if (req.arrive >= 0 && req.type_id == Request::Type::Read) {
+            const Clk_t lat = req.depart - req.arrive;
+            if (lat >= 0) {
+              s_read_latency_sum += static_cast<uint64_t>(lat);
+              s_read_latency_samples++;
+            }
           }
 
           if (req.callback) {
@@ -183,7 +227,7 @@ class GenericDRAMController final : public IDRAMController, public Implementatio
 
     /**
      * @brief    Checks if we need to switch to write mode
-     * 
+     *
      */
     void set_write_mode() {
       if (!m_is_write_mode) {
@@ -200,7 +244,7 @@ class GenericDRAMController final : public IDRAMController, public Implementatio
 
     /**
      * @brief    Helper function to find a request to schedule from the buffers.
-     * 
+     *
      */
     bool schedule_request(ReqBuffer::iterator& req_it, ReqBuffer*& req_buffer) {
       bool request_found = false;
@@ -219,7 +263,7 @@ class GenericDRAMController final : public IDRAMController, public Implementatio
           req_buffer = &m_priority_buffer;
           req_it = m_priority_buffer.begin();
           req_it->command = m_dram->get_preq_command(req_it->final_command, req_it->addr_vec);
-          
+
           request_found = m_dram->check_ready(req_it->command, req_it->addr_vec);
           if ((!request_found) & (m_priority_buffer.size() != 0)) {
             return false;
@@ -268,5 +312,5 @@ class GenericDRAMController final : public IDRAMController, public Implementatio
     }
 
 };
-  
+
 }   // namespace Ramulator
