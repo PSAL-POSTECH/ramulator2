@@ -1,6 +1,6 @@
 #include "ramulator2.hh"
 
-#include <fmt/core.h>
+#include <iostream>
 #include "base/base.h"
 #include "base/config.h"
 #include "base/request.h"
@@ -44,22 +44,33 @@ mem_fetch* Ramulator2::return_queue_pop() {
   return mf;
 }
 
-void Ramulator2::finish() {
-  ramulator2_frontend->finalize(memory_id == 0);
-  ramulator2_memorysystem->finalize(memory_id == 0);
-  if (cycle_count == 0)
+void Ramulator2::finalize_once() {
+  if (finish_called_) {
     return;
+  }
+  finish_called_ = true;
+  // 2.0: finalize(bool dump_stat); use false so YAML goes only through print_stats_yaml.
+  ramulator2_frontend->finalize(false);
+  ramulator2_memorysystem->finalize(false);
+}
 
-  double bytes_per_cycle =
-      (double)(tot_reads + tot_writes) * req_size / cycle_count;
-  double bandwidth_gbs = bytes_per_cycle * freq_mhz / 1000.0;
-  double utilization_pct =
-      (double)(tot_reads + tot_writes) * 100.0 * nbl / (2.0 * cycle_count);
-  spdlog::info("{}: avg BW {} GB/s, {}% ({} reads, {} writes)", std_name,
-               fmt::format("{:.2f}", bandwidth_gbs),
-               fmt::format("{:.2f}", utilization_pct), tot_reads, tot_writes);
-  num_reads = 0;
-  num_writes = 0;
+void Ramulator2::print_stats_yaml(std::ostream& os) {
+  YAML::Emitter fe;
+  fe << YAML::BeginMap;
+  ramulator2_frontend->m_impl->print_stats(fe);
+  fe << YAML::EndMap;
+  os << fe.c_str() << std::endl;
+  YAML::Emitter ms;
+  ms << YAML::BeginMap;
+  ramulator2_memorysystem->m_impl->print_stats(ms);
+  ms << YAML::EndMap;
+  os << ms.c_str() << std::endl;
+}
+
+void Ramulator2::finish() {
+  finalize_once();
+  print_stats_yaml(std::cout);
+  std::cout.flush();
 }
 
 void Ramulator2::cycle() {
@@ -82,23 +93,6 @@ void Ramulator2::cycle() {
       request_queue.pop();
   }
   ramulator2_memorysystem->tick();
-  if(cycle_count % log_interval == 0) {
-    double bytes_per_cycle =
-        (double)(num_reads + num_writes) * req_size / log_interval;
-    double bandwidth_gbs = bytes_per_cycle * freq_mhz / 1000.0;
-    double utilization_pct =
-        (double)(num_reads + num_writes) * 100.0 * nbl / (2.0 * log_interval);
-    if(memory_id == 0)
-      spdlog::info("{}: BW {} GB/s, {}% ({} reads, {} writes)",
-                  std_name, fmt::format("{:.2f}", bandwidth_gbs),
-                  fmt::format("{:.2f}", utilization_pct), num_reads, num_writes);
-    else
-      spdlog::debug("{}: BW {} GB/s, {}% ({} reads, {} writes)",
-                  std_name, fmt::format("{:.2f}", bandwidth_gbs),
-                  fmt::format("{:.2f}", utilization_pct), num_reads, num_writes);
-    num_reads = 0;
-    num_writes = 0;
-  }
   cycle_count++;
 }
 

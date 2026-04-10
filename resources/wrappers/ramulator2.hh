@@ -3,6 +3,7 @@
 
 #include <deque>
 #include <functional>
+#include <ostream>
 #include <queue>
 #include <string>
 #include <unordered_map>
@@ -33,6 +34,8 @@ class Ramulator2 {
   void init();
   bool full() const;
   void cycle();
+  void finalize_once();
+  void print_stats_yaml(std::ostream& os);
   void finish();
   void print(FILE *fp = NULL);
   void push(class mem_fetch *mf);
@@ -40,6 +43,15 @@ class Ramulator2 {
   mem_fetch *return_queue_pop();
   void return_queue_push_back(mem_fetch *mf);
   bool returnq_full() const;
+
+  int interval_reads() const { return num_reads; }
+  int interval_writes() const { return num_writes; }
+  void reset_interval_bw_counters() {
+    num_reads = 0;
+    num_writes = 0;
+  }
+  int total_reads() const { return tot_reads; }
+  int total_writes() const { return tot_writes; }
 
   // virtual bool is_active();
   // virtual void set_dram_power_stats(unsigned &cmd, unsigned &activity,
@@ -52,6 +64,7 @@ class Ramulator2 {
   bool is_gpu;
   std::string std_name;
   std::string config_path;
+  bool finish_called_ = false;
   std::queue<mem_fetch *> request_queue;
   std::queue<mem_fetch *> return_queue;
   Ramulator::IFrontEnd *ramulator2_frontend;
