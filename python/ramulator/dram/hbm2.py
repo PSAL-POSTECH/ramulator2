@@ -196,11 +196,23 @@ HBM2.org_presets = {
 # Secondary timings (nRRDS, nRRDL, nFAW, nRFC, nRFCpb, nRREFD, nREFI, nREFIpb)
 # resolved from JEDEC tables in resolve_secondary_timings().
 HBM2.timing_presets = {
+    "HBM2_1400Mbps": {
+        "rate": 1400, "nBL": 2, "nCL": 9, "nRCDRD": 9, "nRCDWR": 7,
+        "nRP": 9, "nRAS": 22, "nRC": 31, "nWR": 11, "nRTPL": 4, "nCWL": 4,
+        "nCCDS": 2, "nCCDL": 4, "nWTRS": 5, "nWTRL": 6,
+        "tCK_ps": 1429,
+    },
     "HBM2_1600Mbps": {
         "rate": 1600, "nBL": 2, "nCL": 10, "nRCDRD": 10, "nRCDWR": 8,
         "nRP": 10, "nRAS": 24, "nRC": 34, "nWR": 12, "nRTPL": 4, "nCWL": 4,
         "nCCDS": 2, "nCCDL": 4, "nWTRS": 5, "nWTRL": 6,
         "tCK_ps": 1250,
+    },
+    "HBM2_1880Mbps": {
+        "rate": 1880, "nBL": 2, "nCL": 13, "nRCDRD": 13, "nRCDWR": 11,
+        "nRP": 13, "nRAS": 31, "nRC": 44, "nWR": 15, "nRTPL": 5, "nCWL": 5,
+        "nCCDS": 2, "nCCDL": 4, "nWTRS": 6, "nWTRL": 8,
+        "tCK_ps": 1064,
     },
     "HBM2_2000Mbps": {
         "rate": 2000, "nBL": 2, "nCL": 14, "nRCDRD": 14, "nRCDWR": 12,

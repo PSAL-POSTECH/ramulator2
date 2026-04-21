@@ -102,7 +102,7 @@ void Ramulator2::cycle() {
       return_queue.push(mf);
     };
     bool success = ramulator2_frontend->receive_external_requests(
-        mf->is_write() ? 1 : 0, mf->get_addr(), 0, callback, nbl);
+        mf->is_write() ? 1 : 0, mf->get_addr(), 0, callback, static_cast<int>(req_size));
     if (success)
       request_queue.pop();
   }

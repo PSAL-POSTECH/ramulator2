@@ -18,14 +18,15 @@ class IMemorySystem;
 class Ramulator2 {
  public:
   Ramulator2() {}
-  Ramulator2(unsigned memory_id, unsigned num_channels,
-             std::string ramulator_config, std::string out, int log_interval, int nbl,
-             unsigned req_size, unsigned freq_mhz)
-      : memory_id(memory_id), num_channels(num_channels),
+  Ramulator2(unsigned memory_id, unsigned num_channels, std::string ramulator_config, std::string out,
+             int log_interval, unsigned req_size, unsigned freq_mhz)
+      : memory_id(memory_id),
+        num_channels(num_channels),
         config_path(ramulator_config),
-        log_interval(log_interval), nbl(nbl),
-        req_size(req_size), freq_mhz(freq_mhz) {
-     init();
+        log_interval(log_interval),
+        req_size(req_size),
+        freq_mhz(freq_mhz) {
+    init();
   }
   ~Ramulator2() {}
 
@@ -67,7 +68,6 @@ class Ramulator2 {
   int num_reqs;
   int num_reads;
   int num_writes;
-  int nbl;
   unsigned req_size = 0;
   unsigned freq_mhz = 0;
   int tot_reqs;
