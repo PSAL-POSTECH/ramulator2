@@ -81,6 +81,33 @@ void Ramulator2::print_stats_yaml(std::ostream& os) {
   ramulator2_memorysystem->print_stats(os);
 }
 
+namespace {
+/** Walk a collect_stats() tree, summing row_misses + row_conflicts wherever they appear. */
+uint64_t sum_row_activations(const Ramulator::ConfigNode& node) {
+  uint64_t acts = 0;
+  if (node.is_sequence()) {
+    for (const auto& child : node.seq())
+      acts += sum_row_activations(child);
+    return acts;
+  }
+  if (!node.is_map())
+    return 0;
+  for (const auto& [key, child] : node.map()) {
+    if (child.is_map() || child.is_sequence())
+      acts += sum_row_activations(child);
+    else if (key == "row_misses" || key == "row_conflicts")
+      acts += child.as<uint64_t>(uint64_t{0});
+  }
+  return acts;
+}
+}  // namespace
+
+uint64_t Ramulator2::row_activations() const {
+  if (ramulator2_memorysystem == nullptr)
+    return 0;
+  return sum_row_activations(ramulator2_memorysystem->collect_stats());
+}
+
 void Ramulator2::finish() {
   finalize_once();
   print_stats_yaml(std::cout);
