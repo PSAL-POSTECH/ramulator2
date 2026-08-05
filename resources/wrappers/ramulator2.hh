@@ -44,14 +44,23 @@ class Ramulator2 {
   void return_queue_push_back(mem_fetch* mf);
   bool returnq_full() const;
 
-  int interval_reads() const { return num_reads; }
-  int interval_writes() const { return num_writes; }
+  uint64_t interval_reads() const { return num_reads; }
+  uint64_t interval_writes() const { return num_writes; }
   void reset_interval_bw_counters() {
     num_reads = 0;
     num_writes = 0;
   }
-  int total_reads() const { return tot_reads; }
-  int total_writes() const { return tot_writes; }
+  uint64_t total_reads() const { return tot_reads; }
+  uint64_t total_writes() const { return tot_writes; }
+
+  /**
+   * Row activations (each a PRE+ACT pair on an open-row policy) served by this
+   * memory system, summed over its controllers. Ramulator2 has no ACT command
+   * counter, so this is derived from the per-controller request stats: a row
+   * hit needs no ACT, while a miss (closed bank) and a conflict (other row
+   * open) each need one. Refresh-driven activations are not included.
+   */
+  uint64_t row_activations() const;
 
  private:
   std::string std_name;
@@ -65,14 +74,14 @@ class Ramulator2 {
   int num_channels;
   uint64_t cycle_count = 0;
   int log_interval = 10000;
-  int num_reqs;
-  int num_reads;
-  int num_writes;
+  uint64_t num_reqs;
+  uint64_t num_reads;
+  uint64_t num_writes;
   unsigned req_size = 0;
   unsigned freq_mhz = 0;
-  int tot_reqs;
-  int tot_reads;
-  int tot_writes;
+  uint64_t tot_reqs;
+  uint64_t tot_reads;
+  uint64_t tot_writes;
 };
 
 #endif  // __RAMULATOR2_HH__
