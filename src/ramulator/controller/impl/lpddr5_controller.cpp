@@ -246,9 +246,9 @@ ControllerBase::Candidate LPDDR5Controller::select_normal_candidate() {
              !would_block_activating(req.command, req.addr_vec);
     });
   }
-  if (!cand.valid && m_priority_buffer.size() == 0) {
+  if (!cand.valid) {
     cand = pick_rw_if([&](const Request& req) {
-      return is_owned_act2_candidate(req) &&
+      return !covered_by_priority(req) && is_owned_act2_candidate(req) &&
              !would_block_activating(req.command, req.addr_vec);
     });
   }

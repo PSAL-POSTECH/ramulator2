@@ -140,6 +140,9 @@ class ControllerBase : public IController, public Implementation {
   Candidate pick_best_ready_from(ReqBuffer& buffer, RequestFilterRef filter);
   Candidate pick_priority_if(RequestFilterRef filter = {});
   Candidate pick_rw_if(RequestFilterRef filter = {});
+  // Whether a pending priority request (a refresh, an injected precharge) names `req`'s address: its -1 levels
+  // cover everything below them. A read or write waits only for the priority requests that cover it.
+  bool covered_by_priority(const Request& req) const;
 
   // Scheduling helpers
   bool would_close_active(const Request& req) const;

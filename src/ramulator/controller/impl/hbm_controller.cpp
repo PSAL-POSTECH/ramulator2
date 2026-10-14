@@ -57,9 +57,9 @@ void HBMController::tick() {
         return slot_matches(req.command, slot);
       });
     }
-    if (!cand.valid && m_priority_buffer.size() == 0) {
+    if (!cand.valid) {
       cand = pick_rw_if([&](const Request& req) {
-        return slot_matches(req.command, slot);
+        return slot_matches(req.command, slot) && !covered_by_priority(req);
       });
     }
 

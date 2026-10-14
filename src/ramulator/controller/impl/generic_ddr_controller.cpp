@@ -42,8 +42,8 @@ void GenericDDRController::tick() {
   }
 
   // 3. If no candidate found, try to schedule from read/write (with write mode check)
-  if (!cand.valid && m_priority_buffer.size() == 0) {
-    cand = pick_rw_if();
+  if (!cand.valid) {
+    cand = pick_rw_if([&](const Request& req) { return !covered_by_priority(req); });
   }
 
   // We have a valid request to serve this cycle

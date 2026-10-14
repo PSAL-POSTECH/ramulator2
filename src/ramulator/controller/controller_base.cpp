@@ -300,6 +300,19 @@ ControllerBase::Candidate ControllerBase::pick_rw_if(RequestFilterRef filter) {
   });
 }
 
+bool ControllerBase::covered_by_priority(const Request& req) const {
+  for (const auto& p : m_priority_buffer.buffer) {
+    bool covers = true;
+    for (size_t l = 0; covers && l < p.addr_vec.size() && l < req.addr_vec.size(); l++) {
+      covers = p.addr_vec[l] == -1 || p.addr_vec[l] == req.addr_vec[l];
+    }
+    if (covers) {
+      return true;
+    }
+  }
+  return false;
+}
+
 bool ControllerBase::would_close_active(const Request& req) const {
   if (!m_device.m_spec->command_meta[req.command].is_closing) {
     return false;
