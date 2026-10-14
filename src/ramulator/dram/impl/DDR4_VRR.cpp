@@ -6,6 +6,9 @@
  *
  * Regenerate:   python -m ramulator codegen DDR4_VRR
  ******************************************************************************/
+#include "ramulator/dram/dram_spec.h"
+
+#include "ramulator/dram/commands/populate.h"
 #include "ramulator/dram/commands/ACT.h"
 #include "ramulator/dram/commands/PREab.h"
 #include "ramulator/dram/commands/PREpb.h"
@@ -15,8 +18,6 @@
 #include "ramulator/dram/commands/VRR.h"
 #include "ramulator/dram/commands/WR.h"
 #include "ramulator/dram/commands/WRA.h"
-#include "ramulator/dram/commands/populate.h"
-#include "ramulator/dram/dram_spec.h"
 
 namespace Ramulator {
 
@@ -33,35 +34,15 @@ class DDR4_VRR : public DRAMSpec {
   };
   struct Timing {
     enum : int {
-      rate,
-      nBL,
-      nCL,
-      nRCD,
-      nRP,
-      nRAS,
-      nRC,
-      nWR,
-      nRTP,
-      nCWL,
-      nCCDS,
-      nCCDL,
-      nRRDS,
-      nRRDL,
-      nWTRS,
-      nWTRL,
-      nFAW,
-      nRFC,
-      nREFI,
-      nCS,
-      tCK_ps,
-      nVRR,
-      COUNT
+    rate, nBL, nCL, nRCD, nRP, nRAS, nRC, nWR, nRTP, nCWL, nCCDS, nCCDL, nRRDS, nRRDL, nWTRS, nWTRL, nFAW, nRFC,
+    nREFI, nCS, tCK_ps, nVRR, COUNT
     };
   };
 
-  using CommandImpls =
-      std::tuple<Cmd::ACT<DDR4_VRR>, Cmd::PREpb<DDR4_VRR>, Cmd::PREab<DDR4_VRR>, Cmd::RD<DDR4_VRR>, Cmd::WR<DDR4_VRR>,
-                 Cmd::RDA<DDR4_VRR>, Cmd::WRA<DDR4_VRR>, Cmd::REFab<DDR4_VRR>, Cmd::VRR<DDR4_VRR> >;
+  using CommandImpls = std::tuple<
+      Cmd::ACT<DDR4_VRR>, Cmd::PREpb<DDR4_VRR>, Cmd::PREab<DDR4_VRR>, Cmd::RD<DDR4_VRR>, Cmd::WR<DDR4_VRR>,
+      Cmd::RDA<DDR4_VRR>, Cmd::WRA<DDR4_VRR>, Cmd::REFab<DDR4_VRR>, Cmd::VRR<DDR4_VRR>
+  >;
 
   DDR4_VRR(const ConfigNode& config) {
     // Counts
@@ -74,23 +55,24 @@ class DDR4_VRR : public DRAMSpec {
     set_names(levels, level_names, {"Channel", "Rank", "BankGroup", "Bank", "Row", "Column"});
     set_names(commands, command_names, {"ACT", "PREpb", "PREab", "RD", "WR", "RDA", "WRA", "REFab", "VRR"});
     set_names(states, state_names, {"Opened", "Closed", "N_A"});
-    set_names(timings, timing_names,
-              {"rate",  "nBL",   "nCL",   "nRCD",  "nRP",   "nRAS", "nRC",  "nWR",   "nRTP", "nCWL",   "nCCDS",
-               "nCCDL", "nRRDS", "nRRDL", "nWTRS", "nWTRL", "nFAW", "nRFC", "nREFI", "nCS",  "tCK_ps", "nVRR"});
+    set_names(timings, timing_names, {
+        "rate", "nBL", "nCL", "nRCD", "nRP", "nRAS", "nRC", "nWR", "nRTP", "nCWL", "nCCDS", "nCCDL", "nRRDS",
+        "nRRDL", "nWTRS", "nWTRL", "nFAW", "nRFC", "nREFI", "nCS", "tCK_ps", "nVRR"
+    });
 
     // Static spec data
     internal_prefetch_size = 8;
     init_states = {
-        State::N_A,     // Channel
-        State::N_A,     // Rank
-        State::N_A,     // BankGroup
-        State::Closed,  // Bank
-        State::Closed,  // Row
-        State::N_A,     // Column
+        State::N_A,           // Channel
+        State::N_A,           // Rank
+        State::N_A,           // BankGroup
+        State::Closed,        // Bank
+        State::Closed,        // Row
+        State::N_A,           // Column
     };
     supported_requests = {
-        Command::RD,  // Read -> RD
-        Command::WR,  // Write -> WR
+        Command::RD,        // Read -> RD
+        Command::WR,        // Write -> WR
     };
 
     // Runtime config (organization, timing values, timing constraints)

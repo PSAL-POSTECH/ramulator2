@@ -6,6 +6,9 @@
  *
  * Regenerate:   python -m ramulator codegen GDDR6
  ******************************************************************************/
+#include "ramulator/dram/dram_spec.h"
+
+#include "ramulator/dram/commands/populate.h"
 #include "ramulator/dram/commands/ACT.h"
 #include "ramulator/dram/commands/PREab.h"
 #include "ramulator/dram/commands/PREpb.h"
@@ -15,8 +18,6 @@
 #include "ramulator/dram/commands/REFpb.h"
 #include "ramulator/dram/commands/WR.h"
 #include "ramulator/dram/commands/WRA.h"
-#include "ramulator/dram/commands/populate.h"
-#include "ramulator/dram/dram_spec.h"
 
 namespace Ramulator {
 
@@ -33,38 +34,15 @@ class GDDR6 : public DRAMSpec {
   };
   struct Timing {
     enum : int {
-      rate,
-      nBL,
-      nCL,
-      nRCDRD,
-      nRCDWR,
-      nRP,
-      nRAS,
-      nRC,
-      nWR,
-      nRTP,
-      nCWL,
-      nCCDS,
-      nCCDL,
-      nRRDS,
-      nRRDL,
-      nWTRS,
-      nWTRL,
-      nRTW,
-      nFAW,
-      nRFCpb,
-      nRREFD,
-      nREFI,
-      nREFIpb,
-      tCK_ps,
-      nRFCab,
-      nPPD,
-      COUNT
+    rate, nBL, nCL, nRCDRD, nRCDWR, nRP, nRAS, nRC, nWR, nRTP, nCWL, nCCDS, nCCDL, nRRDS, nRRDL, nWTRS, nWTRL, nRTW,
+    nFAW, nRFCpb, nRREFD, nREFI, nREFIpb, tCK_ps, nRFCab, nPPD, COUNT
     };
   };
 
-  using CommandImpls = std::tuple<Cmd::ACT<GDDR6>, Cmd::PREab<GDDR6>, Cmd::PREpb<GDDR6>, Cmd::RD<GDDR6>, Cmd::WR<GDDR6>,
-                                  Cmd::RDA<GDDR6>, Cmd::WRA<GDDR6>, Cmd::REFab<GDDR6>, Cmd::REFpb<GDDR6> >;
+  using CommandImpls = std::tuple<
+      Cmd::ACT<GDDR6>, Cmd::PREab<GDDR6>, Cmd::PREpb<GDDR6>, Cmd::RD<GDDR6>, Cmd::WR<GDDR6>, Cmd::RDA<GDDR6>,
+      Cmd::WRA<GDDR6>, Cmd::REFab<GDDR6>, Cmd::REFpb<GDDR6>
+  >;
 
   GDDR6(const ConfigNode& config) {
     // Counts
@@ -77,23 +55,24 @@ class GDDR6 : public DRAMSpec {
     set_names(levels, level_names, {"Channel", "BankGroup", "Bank", "Row", "Column"});
     set_names(commands, command_names, {"ACT", "PREab", "PREpb", "RD", "WR", "RDA", "WRA", "REFab", "REFpb"});
     set_names(states, state_names, {"Opened", "Closed", "N_A"});
-    set_names(timings, timing_names,
-              {"rate", "nBL",    "nCL",    "nRCDRD", "nRCDWR",  "nRP",    "nRAS",   "nRC",   "nWR",
-               "nRTP", "nCWL",   "nCCDS",  "nCCDL",  "nRRDS",   "nRRDL",  "nWTRS",  "nWTRL", "nRTW",
-               "nFAW", "nRFCpb", "nRREFD", "nREFI",  "nREFIpb", "tCK_ps", "nRFCab", "nPPD"});
+    set_names(timings, timing_names, {
+        "rate", "nBL", "nCL", "nRCDRD", "nRCDWR", "nRP", "nRAS", "nRC", "nWR", "nRTP", "nCWL", "nCCDS", "nCCDL",
+        "nRRDS", "nRRDL", "nWTRS", "nWTRL", "nRTW", "nFAW", "nRFCpb", "nRREFD", "nREFI", "nREFIpb", "tCK_ps",
+        "nRFCab", "nPPD"
+    });
 
     // Static spec data
     internal_prefetch_size = 16;
     init_states = {
-        State::N_A,     // Channel
-        State::N_A,     // BankGroup
-        State::Closed,  // Bank
-        State::Closed,  // Row
-        State::N_A,     // Column
+        State::N_A,           // Channel
+        State::N_A,           // BankGroup
+        State::Closed,        // Bank
+        State::Closed,        // Row
+        State::N_A,           // Column
     };
     supported_requests = {
-        Command::RD,  // Read -> RD
-        Command::WR,  // Write -> WR
+        Command::RD,        // Read -> RD
+        Command::WR,        // Write -> WR
     };
 
     // Runtime config (organization, timing values, timing constraints)
@@ -105,7 +84,7 @@ class GDDR6 : public DRAMSpec {
 };
 
 // Self-registration
-static bool _dram_gddr6 =
-    DRAMSpec::register_standard("GDDR6", [](const ConfigNode& config) { return std::make_unique<GDDR6>(config); });
+static bool _dram_gddr6 = DRAMSpec::register_standard(
+    "GDDR6", [](const ConfigNode& config) { return std::make_unique<GDDR6>(config); });
 
 }  // namespace Ramulator

@@ -80,6 +80,7 @@ class ControllerBase : public IController, public Implementation {
 
   // Cached spec lookups
   int m_bank_level = -1;
+  int m_refresh_scope_levels = -1;
   int m_tCK_ps = -1;
 
   // Per flat-bank count of requests in m_active_buffer (typically 0 or 1).
@@ -151,6 +152,19 @@ class ControllerBase : public IController, public Implementation {
   Candidate pick_best_ready_from(ReqBuffer& buffer, RequestFilterRef filter);
   Candidate pick_priority_if(RequestFilterRef filter = {});
   Candidate pick_rw_if(RequestFilterRef filter = {});
+
+  // True when a pending priority request's address vector covers this one.  A
+  // level the priority request left at -1 covers every value below it, so REFab
+  // (addressed to a rank) still blocks that whole rank, while REFpb (addressed to
+  // a bank) blocks only its own bank.
+  bool covered_by_priority(const Request& req) const;
+
+  // True when this request would open a row in the same scope as a pending
+  // per-bank refresh.  Once the gate above admits the other banks, their ACTs keep
+  // deferring REFpb's own ready time through the rank-level ACT->REFpb constraints,
+  // and the refresh starves; holding back just the row openings lets it through
+  // while reads and writes to already-open rows continue.
+  bool opens_row_beside_refresh(const Request& req) const;
 
   // Scheduling helpers
   bool would_close_active(const Request& req) const;

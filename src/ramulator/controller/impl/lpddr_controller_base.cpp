@@ -260,10 +260,10 @@ ControllerBase::Candidate LPDDRControllerBase::select_normal_candidate() {
              can_start_act1(req);
     });
   }
-  if (!cand.valid && m_priority_buffer.size() == 0) {
+  if (!cand.valid) {
     cand = pick_rw_if([&](const Request& req) {
-      return is_owned_act2_candidate(req) && is_allowed_during_pending_act2(req.command, req.addr_vec) &&
-             can_start_act1(req);
+      return !covered_by_priority(req) && !opens_row_beside_refresh(req) && is_owned_act2_candidate(req) &&
+             is_allowed_during_pending_act2(req.command, req.addr_vec) && can_start_act1(req);
     });
   }
   return cand;
