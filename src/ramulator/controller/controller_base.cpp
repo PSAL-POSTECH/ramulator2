@@ -61,6 +61,9 @@ void ControllerBase::init_base() {
 
   // Cache frequently-used lookups
   m_bank_level = m_device.m_spec->get_level_id("Bank");
+  m_refresh_scope_levels = m_device.m_spec->has_level("BankGroup")
+                               ? m_device.m_spec->get_level_id("BankGroup")
+                               : m_bank_level;
   m_tCK_ps = m_device.m_spec->get_timing_value("tCK_ps");
 
   // Active buffer holds requests with in-flight opening commands (ACT).
@@ -311,6 +314,39 @@ ControllerBase::Candidate ControllerBase::pick_rw_if(RequestFilterRef filter) {
     }
     return !filter || filter(req);
   });
+}
+
+bool ControllerBase::opens_row_beside_refresh(const Request& req) const {
+  const auto& meta = m_device.m_spec->command_meta;
+  if (!meta[req.command].is_opening) {
+    return false;
+  }
+  for (const auto& p : m_priority_buffer.buffer) {
+    if (!meta[p.final_command].is_refreshing || p.addr_vec[m_bank_level] == -1) {
+      continue;
+    }
+    bool same_scope = true;
+    for (int l = 0; same_scope && l < m_refresh_scope_levels; l++) {
+      same_scope = p.addr_vec[l] == -1 || p.addr_vec[l] == req.addr_vec[l];
+    }
+    if (same_scope) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool ControllerBase::covered_by_priority(const Request& req) const {
+  for (const auto& p : m_priority_buffer.buffer) {
+    bool covers = true;
+    for (size_t l = 0; covers && l < p.addr_vec.size() && l < req.addr_vec.size(); l++) {
+      covers = p.addr_vec[l] == -1 || p.addr_vec[l] == req.addr_vec[l];
+    }
+    if (covers) {
+      return true;
+    }
+  }
+  return false;
 }
 
 bool ControllerBase::would_close_active(const Request& req) const {

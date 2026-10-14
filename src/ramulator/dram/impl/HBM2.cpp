@@ -6,6 +6,9 @@
  *
  * Regenerate:   python -m ramulator codegen HBM2
  ******************************************************************************/
+#include "ramulator/dram/dram_spec.h"
+
+#include "ramulator/dram/commands/populate.h"
 #include "ramulator/dram/commands/ACT.h"
 #include "ramulator/dram/commands/PREab.h"
 #include "ramulator/dram/commands/PREpb.h"
@@ -15,8 +18,6 @@
 #include "ramulator/dram/commands/REFpb.h"
 #include "ramulator/dram/commands/WR.h"
 #include "ramulator/dram/commands/WRA.h"
-#include "ramulator/dram/commands/populate.h"
-#include "ramulator/dram/dram_spec.h"
 
 namespace Ramulator {
 
@@ -33,38 +34,15 @@ class HBM2 : public DRAMSpec {
   };
   struct Timing {
     enum : int {
-      rate,
-      nBL,
-      nCL,
-      nRCDRD,
-      nRCDWR,
-      nRP,
-      nRAS,
-      nRC,
-      nWR,
-      nRTPL,
-      nCWL,
-      nCCDS,
-      nCCDL,
-      nCCDR,
-      nRRDS,
-      nRRDL,
-      nWTRS,
-      nWTRL,
-      nRTW,
-      nFAW,
-      nRFC,
-      nRFCpb,
-      nRREFD,
-      nREFI,
-      nREFIpb,
-      tCK_ps,
-      COUNT
+    rate, nBL, nCL, nRCDRD, nRCDWR, nRP, nRAS, nRC, nWR, nRTPL, nCWL, nCCDS, nCCDL, nCCDR, nRRDS, nRRDL, nWTRS,
+    nWTRL, nRTW, nFAW, nRFC, nRFCpb, nRREFD, nREFI, nREFIpb, tCK_ps, COUNT
     };
   };
 
-  using CommandImpls = std::tuple<Cmd::ACT<HBM2>, Cmd::PREpb<HBM2>, Cmd::PREab<HBM2>, Cmd::RD<HBM2>, Cmd::WR<HBM2>,
-                                  Cmd::RDA<HBM2>, Cmd::WRA<HBM2>, Cmd::REFab<HBM2>, Cmd::REFpb<HBM2> >;
+  using CommandImpls = std::tuple<
+      Cmd::ACT<HBM2>, Cmd::PREpb<HBM2>, Cmd::PREab<HBM2>, Cmd::RD<HBM2>, Cmd::WR<HBM2>, Cmd::RDA<HBM2>,
+      Cmd::WRA<HBM2>, Cmd::REFab<HBM2>, Cmd::REFpb<HBM2>
+  >;
 
   HBM2(const ConfigNode& config) {
     // Counts
@@ -77,25 +55,26 @@ class HBM2 : public DRAMSpec {
     set_names(levels, level_names, {"Channel", "PseudoChannel", "Sid", "BankGroup", "Bank", "Row", "Column"});
     set_names(commands, command_names, {"ACT", "PREpb", "PREab", "RD", "WR", "RDA", "WRA", "REFab", "REFpb"});
     set_names(states, state_names, {"Opened", "Closed", "N_A"});
-    set_names(timings, timing_names,
-              {"rate",  "nBL",  "nCL",   "nRCDRD", "nRCDWR", "nRP",   "nRAS",    "nRC",   "nWR",
-               "nRTPL", "nCWL", "nCCDS", "nCCDL",  "nCCDR",  "nRRDS", "nRRDL",   "nWTRS", "nWTRL",
-               "nRTW",  "nFAW", "nRFC",  "nRFCpb", "nRREFD", "nREFI", "nREFIpb", "tCK_ps"});
+    set_names(timings, timing_names, {
+        "rate", "nBL", "nCL", "nRCDRD", "nRCDWR", "nRP", "nRAS", "nRC", "nWR", "nRTPL", "nCWL", "nCCDS", "nCCDL",
+        "nCCDR", "nRRDS", "nRRDL", "nWTRS", "nWTRL", "nRTW", "nFAW", "nRFC", "nRFCpb", "nRREFD", "nREFI", "nREFIpb",
+        "tCK_ps"
+    });
 
     // Static spec data
     internal_prefetch_size = 4;
     init_states = {
-        State::N_A,     // Channel
-        State::N_A,     // PseudoChannel
-        State::N_A,     // Sid
-        State::N_A,     // BankGroup
-        State::Closed,  // Bank
-        State::Closed,  // Row
-        State::N_A,     // Column
+        State::N_A,           // Channel
+        State::N_A,           // PseudoChannel
+        State::N_A,           // Sid
+        State::N_A,           // BankGroup
+        State::Closed,        // Bank
+        State::Closed,        // Row
+        State::N_A,           // Column
     };
     supported_requests = {
-        Command::RD,  // Read -> RD
-        Command::WR,  // Write -> WR
+        Command::RD,        // Read -> RD
+        Command::WR,        // Write -> WR
     };
 
     // Runtime config (organization, timing values, timing constraints)
@@ -104,21 +83,21 @@ class HBM2 : public DRAMSpec {
     // Command handlers (function pointers, metadata, bank targets)
     populate_commands(CommandImpls{}, *this);
 
-    // Bus classification (for dual-bus controllers)
-    command_meta[Command::ACT].is_row_command = true;
-    command_meta[Command::PREpb].is_row_command = true;
-    command_meta[Command::PREab].is_row_command = true;
-    command_meta[Command::REFab].is_row_command = true;
-    command_meta[Command::REFpb].is_row_command = true;
-    command_meta[Command::RD].is_column_command = true;
-    command_meta[Command::WR].is_column_command = true;
-    command_meta[Command::RDA].is_column_command = true;
-    command_meta[Command::WRA].is_column_command = true;
+      // Bus classification (for dual-bus controllers)
+      command_meta[Command::ACT].is_row_command = true;
+      command_meta[Command::PREpb].is_row_command = true;
+      command_meta[Command::PREab].is_row_command = true;
+      command_meta[Command::REFab].is_row_command = true;
+      command_meta[Command::REFpb].is_row_command = true;
+      command_meta[Command::RD].is_column_command = true;
+      command_meta[Command::WR].is_column_command = true;
+      command_meta[Command::RDA].is_column_command = true;
+      command_meta[Command::WRA].is_column_command = true;
   }
 };
 
 // Self-registration
-static bool _dram_hbm2 =
-    DRAMSpec::register_standard("HBM2", [](const ConfigNode& config) { return std::make_unique<HBM2>(config); });
+static bool _dram_hbm2 = DRAMSpec::register_standard(
+    "HBM2", [](const ConfigNode& config) { return std::make_unique<HBM2>(config); });
 
 }  // namespace Ramulator

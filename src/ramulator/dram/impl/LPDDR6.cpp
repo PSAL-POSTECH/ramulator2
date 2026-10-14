@@ -6,6 +6,9 @@
  *
  * Regenerate:   python -m ramulator codegen LPDDR6
  ******************************************************************************/
+#include "ramulator/dram/dram_spec.h"
+
+#include "ramulator/dram/commands/populate.h"
 #include "ramulator/dram/commands/ACT1.h"
 #include "ramulator/dram/commands/ACT2.h"
 #include "ramulator/dram/commands/CAS.h"
@@ -20,8 +23,6 @@
 #include "ramulator/dram/commands/WRA_S.h"
 #include "ramulator/dram/commands/WR_L.h"
 #include "ramulator/dram/commands/WR_S.h"
-#include "ramulator/dram/commands/populate.h"
-#include "ramulator/dram/dram_spec.h"
 
 namespace Ramulator {
 
@@ -38,57 +39,18 @@ class LPDDR6 : public DRAMSpec {
   };
   struct Timing {
     enum : int {
-      rate,
-      nBL_min,
-      nBL_max,
-      nBL_min_L,
-      nBL_max_L,
-      nRL,
-      nWL,
-      nACU,
-      nRCDr,
-      nRCDw,
-      nRP,
-      nRPab,
-      nRAS,
-      nRC,
-      nWTP,
-      nRTP,
-      nRTP_L,
-      nPPD,
-      nCCDS,
-      nCCDL,
-      nCCDL_L,
-      nCCDS_WR,
-      nCCDL_WR,
-      nCCDL_WR_L,
-      nRRD,
-      nWTRS,
-      nWTRL,
-      nRTW_S,
-      nRTW_L,
-      nRTW_S_L,
-      nRTW_L_L,
-      nWCK2DQO,
-      nRPST,
-      nODTLon,
-      nODTon_min,
-      nFAW,
-      nRFC,
-      nREFI,
-      nWCKPST,
-      nCAS,
-      nAAD,
-      nCS,
-      tCK_ps,
-      COUNT
+    rate, nBL_min, nBL_max, nBL_min_L, nBL_max_L, nRL, nWL, nACU, nRCDr, nRCDw, nRP, nRPab, nRAS, nRC, nWTP, nRTP,
+    nRTP_L, nPPD, nCCDS, nCCDL, nCCDL_L, nCCDS_WR, nCCDL_WR, nCCDL_WR_L, nRRD, nWTRS, nWTRL, nRTW_S, nRTW_L,
+    nRTW_S_L, nRTW_L_L, nWCK2DQO, nRPST, nODTLon, nODTon_min, nFAW, nRFC, nREFI, nWCKPST, nCAS, nAAD, nCS, tCK_ps,
+    COUNT
     };
   };
 
-  using CommandImpls =
-      std::tuple<Cmd::ACT1<LPDDR6>, Cmd::ACT2<LPDDR6>, Cmd::PREpb<LPDDR6>, Cmd::PREab<LPDDR6>, Cmd::CAS<LPDDR6>,
-                 Cmd::RD_S<LPDDR6>, Cmd::WR_S<LPDDR6>, Cmd::RDA_S<LPDDR6>, Cmd::WRA_S<LPDDR6>, Cmd::RD_L<LPDDR6>,
-                 Cmd::WR_L<LPDDR6>, Cmd::RDA_L<LPDDR6>, Cmd::WRA_L<LPDDR6>, Cmd::REFab<LPDDR6> >;
+  using CommandImpls = std::tuple<
+      Cmd::ACT1<LPDDR6>, Cmd::ACT2<LPDDR6>, Cmd::PREpb<LPDDR6>, Cmd::PREab<LPDDR6>, Cmd::CAS<LPDDR6>,
+      Cmd::RD_S<LPDDR6>, Cmd::WR_S<LPDDR6>, Cmd::RDA_S<LPDDR6>, Cmd::WRA_S<LPDDR6>, Cmd::RD_L<LPDDR6>,
+      Cmd::WR_L<LPDDR6>, Cmd::RDA_L<LPDDR6>, Cmd::WRA_L<LPDDR6>, Cmd::REFab<LPDDR6>
+  >;
 
   LPDDR6(const ConfigNode& config) {
     // Counts
@@ -99,31 +61,28 @@ class LPDDR6 : public DRAMSpec {
 
     // String name maps + reverse lookup vectors
     set_names(levels, level_names, {"Channel", "Rank", "BankGroup", "Bank", "Row", "Column"});
-    set_names(commands, command_names,
-              {"ACT1", "ACT2", "PREpb", "PREab", "CAS", "RD_S", "WR_S", "RDA_S", "WRA_S", "RD_L", "WR_L", "RDA_L",
-               "WRA_L", "REFab"});
+    set_names(commands, command_names, {"ACT1", "ACT2", "PREpb", "PREab", "CAS", "RD_S", "WR_S", "RDA_S", "WRA_S", "RD_L", "WR_L", "RDA_L", "WRA_L", "REFab"});
     set_names(states, state_names, {"Opened", "Closed", "Activating", "N_A"});
-    set_names(
-        timings, timing_names,
-        {"rate",   "nBL_min", "nBL_max",  "nBL_min_L", "nBL_max_L", "nRL",        "nWL",     "nACU",       "nRCDr",
-         "nRCDw",  "nRP",     "nRPab",    "nRAS",      "nRC",       "nWTP",       "nRTP",    "nRTP_L",     "nPPD",
-         "nCCDS",  "nCCDL",   "nCCDL_L",  "nCCDS_WR",  "nCCDL_WR",  "nCCDL_WR_L", "nRRD",    "nWTRS",      "nWTRL",
-         "nRTW_S", "nRTW_L",  "nRTW_S_L", "nRTW_L_L",  "nWCK2DQO",  "nRPST",      "nODTLon", "nODTon_min", "nFAW",
-         "nRFC",   "nREFI",   "nWCKPST",  "nCAS",      "nAAD",      "nCS",        "tCK_ps"});
+    set_names(timings, timing_names, {
+        "rate", "nBL_min", "nBL_max", "nBL_min_L", "nBL_max_L", "nRL", "nWL", "nACU", "nRCDr", "nRCDw", "nRP",
+        "nRPab", "nRAS", "nRC", "nWTP", "nRTP", "nRTP_L", "nPPD", "nCCDS", "nCCDL", "nCCDL_L", "nCCDS_WR",
+        "nCCDL_WR", "nCCDL_WR_L", "nRRD", "nWTRS", "nWTRL", "nRTW_S", "nRTW_L", "nRTW_S_L", "nRTW_L_L", "nWCK2DQO",
+        "nRPST", "nODTLon", "nODTon_min", "nFAW", "nRFC", "nREFI", "nWCKPST", "nCAS", "nAAD", "nCS", "tCK_ps"
+    });
 
     // Static spec data
     internal_prefetch_size = 16;
     init_states = {
-        State::N_A,     // Channel
-        State::N_A,     // Rank
-        State::N_A,     // BankGroup
-        State::Closed,  // Bank
-        State::Closed,  // Row
-        State::N_A,     // Column
+        State::N_A,           // Channel
+        State::N_A,           // Rank
+        State::N_A,           // BankGroup
+        State::Closed,        // Bank
+        State::Closed,        // Row
+        State::N_A,           // Column
     };
     supported_requests = {
-        Command::RD_S,  // Read -> RD_S
-        Command::WR_S,  // Write -> WR_S
+        Command::RD_S,      // Read -> RD_S
+        Command::WR_S,      // Write -> WR_S
     };
 
     // Runtime config (organization, timing values, timing constraints)
@@ -135,7 +94,7 @@ class LPDDR6 : public DRAMSpec {
 };
 
 // Self-registration
-static bool _dram_lpddr6 =
-    DRAMSpec::register_standard("LPDDR6", [](const ConfigNode& config) { return std::make_unique<LPDDR6>(config); });
+static bool _dram_lpddr6 = DRAMSpec::register_standard(
+    "LPDDR6", [](const ConfigNode& config) { return std::make_unique<LPDDR6>(config); });
 
 }  // namespace Ramulator
