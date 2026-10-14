@@ -77,6 +77,7 @@ class ControllerBase : public IController, public Implementation {
 
   // Cached spec lookups
   int m_bank_level = -1;
+  int m_refresh_scope_levels = -1;  // Levels above the bank and its bank group
   int m_tCK_ps = -1;
 
   // Per flat-bank count of requests in m_active_buffer (typically 0 or 1).
@@ -143,6 +144,9 @@ class ControllerBase : public IController, public Implementation {
   // Whether a pending priority request (a refresh, an injected precharge) names `req`'s address: its -1 levels
   // cover everything below them. A read or write waits only for the priority requests that cover it.
   bool covered_by_priority(const Request& req) const;
+  // Whether `req` would open a row beside a pending per-bank refresh: in its scope (the levels above the bank and
+  // its bank group), where each ACT pushes the refresh back by ACT-to-REFpb and a stream of them starves it.
+  bool opens_row_beside_refresh(const Request& req) const;
 
   // Scheduling helpers
   bool would_close_active(const Request& req) const;

@@ -1,5 +1,6 @@
-"""A pending refresh holds back only the reads and writes it covers (JESD238 6.3.2.6: a per-bank refresh leaves
-accesses to other banks unaffected), and two per-bank refreshes are tRREFD apart."""
+"""A pending refresh holds back the reads and writes it covers, and a per-bank one also the row openings beside it:
+ACT-to-REFpb would let them starve it. Column accesses to other banks go on (JESD238 6.3.2.6), and two per-bank
+refreshes are tRREFD apart."""
 import pytest
 
 import ramulator
@@ -40,16 +41,6 @@ def first(dut, history, command, **levels):
     raise AssertionError(f"no {command} with {levels} in {[c.command for c in history]}")
 
 
-def test_per_bank_refresh_leaves_other_banks_unaffected():
-    dut = make_dut()
-    open_row(dut, dut.addr_vec(PseudoChannel=0, BankGroup=0, Bank=0, Row=0, Column=0))
-    dut.priority_send("REFpb", dut.addr_vec(PseudoChannel=0, BankGroup=0, Bank=0, Row=dut.ALL, Column=dut.ALL))
-    dut.send_request("Read", dut.addr_vec(PseudoChannel=0, BankGroup=0, Bank=1, Row=0, Column=0))
-    history = dut.run_until_idle(max_ticks=1024)
-
-    assert first(dut, history, "ACT", PseudoChannel=0, Bank=1) < first(dut, history, "REFpb")
-
-
 def test_all_bank_refresh_holds_back_its_pseudo_channel_only():
     dut = make_dut()
     open_row(dut, dut.addr_vec(PseudoChannel=0, BankGroup=0, Bank=0, Row=0, Column=0))
@@ -72,3 +63,68 @@ def test_per_bank_refreshes_are_trrefd_apart():
 
     dut.assert_commands(["REFpb", "REFpb"], history=history)
     assert history[1].clk - history[0].clk >= dut.timings["nRREFD"]
+
+
+class RowMisses:
+    """Reads of pseudo channel 0 that visit `banks` in turn, each to a row its bank has not opened yet."""
+
+    def __init__(self, dut, banks):
+        self.dut, self.banks, self.n = dut, banks, 0
+
+    def fill(self):
+        """Send reads until the read buffer refuses one; the refused read is sent again next time."""
+        while True:
+            bg, b = self.banks[self.n % len(self.banks)]
+            try:
+                self.dut.send_request("Read", self.dut.addr_vec(PseudoChannel=0, BankGroup=bg, Bank=b,
+                                                                Row=self.n + 1, Column=0))
+            except RuntimeError:
+                return
+            self.n += 1
+
+
+def tick_until(dut, command, feed, max_ticks):
+    """Tick with `feed` before each tick until `command` issues; return its clk."""
+    for _ in range(max_ticks):
+        feed()
+        for c in dut.tick():
+            if c.command == command:
+                return c.clk
+    raise AssertionError(f"no {command} within {max_ticks} ticks")
+
+
+def test_activates_to_other_banks_do_not_starve_a_per_bank_refresh():
+    """ACT->REFpb (tRRDS) outlasts ACT->ACT on HBM3, so a picker that keeps opening rows elsewhere in the pseudo
+    channel pushes a pending REFpb back with every ACT; breaks if row-opening reads are not held while it waits."""
+    dut = make_dut()
+    open_row(dut, dut.addr_vec(PseudoChannel=0, BankGroup=0, Bank=0, Row=0, Column=0))
+    others = [(bg, b) for bg in range(4) for b in range(4) if (bg, b) != (0, 0)]
+    feed = RowMisses(dut, others).fill
+    for _ in range(512):
+        feed()
+        dut.tick()
+
+    queued = dut.history[-1].clk
+    dut.priority_send("REFpb", dut.addr_vec(PseudoChannel=0, BankGroup=0, Bank=0, Row=dut.ALL, Column=dut.ALL))
+    issued = tick_until(dut, "REFpb", feed, max_ticks=16384)
+
+    assert issued - queued <= dut.timings["nRRDS"] + dut.timings["nRP"]
+
+
+def test_per_bank_refresh_holds_back_only_row_openings_beside_it():
+    """Reads to an open row of another bank go on while a REFpb waits; reads that open a row wait in its pseudo
+    channel only. Breaks if a REFpb holds back the whole channel, or lets ACTs beside it through."""
+    dut = make_dut()
+    open_row(dut, dut.addr_vec(PseudoChannel=0, BankGroup=1, Bank=0, Row=0, Column=0))
+    open_row(dut, dut.addr_vec(PseudoChannel=0, BankGroup=0, Bank=0, Row=0, Column=0))
+    dut.priority_send("REFpb", dut.addr_vec(PseudoChannel=0, BankGroup=0, Bank=0, Row=dut.ALL, Column=dut.ALL))
+    for col in range(1, 5):
+        dut.send_request("Read", dut.addr_vec(PseudoChannel=0, BankGroup=1, Bank=0, Row=0, Column=col))
+    dut.send_request("Read", dut.addr_vec(PseudoChannel=0, BankGroup=2, Bank=0, Row=0, Column=0))
+    dut.send_request("Read", dut.addr_vec(PseudoChannel=1, BankGroup=2, Bank=0, Row=0, Column=0))
+    history = dut.run_until_idle(max_ticks=1024)
+
+    refpb = first(dut, history, "REFpb")
+    assert first(dut, history, "RD", PseudoChannel=0, BankGroup=1) < refpb
+    assert first(dut, history, "ACT", PseudoChannel=1) < refpb
+    assert first(dut, history, "ACT", PseudoChannel=0, BankGroup=2) > refpb

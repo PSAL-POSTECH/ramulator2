@@ -43,7 +43,7 @@ void GenericDDRController::tick() {
 
   // 3. If no candidate found, try to schedule from read/write (with write mode check)
   if (!cand.valid) {
-    cand = pick_rw_if([&](const Request& req) { return !covered_by_priority(req); });
+    cand = pick_rw_if([&](const Request& req) { return !covered_by_priority(req) && !opens_row_beside_refresh(req); });
   }
 
   // We have a valid request to serve this cycle
