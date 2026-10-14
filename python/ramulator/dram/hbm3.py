@@ -106,6 +106,7 @@ class HBM3(DRAMStandard):
         TimingConstraint(level="PseudoChannel", preceding=["REFab"], following=["ACT", "PREab"], latency="nRFC"),
         # REFpb-to-ACT different bank (tRREFD)
         TimingConstraint(level="PseudoChannel", preceding=["REFpb"], following=["ACT"], latency="nRREFD"),
+        TimingConstraint(level="PseudoChannel", preceding=["REFpb"], following=["REFpb"], latency="nRREFD"),
         # ACT-to-REFpb different bank (same as tRRD)
         TimingConstraint(level="PseudoChannel", preceding=["ACT"], following=["REFpb"], latency="nRRDS"),
         # RFMab constraints (same structure as REFab)

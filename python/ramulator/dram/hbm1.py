@@ -80,6 +80,7 @@ class HBM1(DRAMStandard):
         TimingConstraint(level="Channel", preceding=["REFab"], following=["ACT", "PREab"], latency="nRFC"),
         # Channel — REFSB-to-ACT different bank (tRREFD)
         TimingConstraint(level="Channel", preceding=["REFpb"], following=["ACT"], latency="nRREFD"),
+        TimingConstraint(level="Channel", preceding=["REFpb"], following=["REFpb"], latency="nRREFD"),
         # Channel — ACT-to-REFSB different bank (same as tRRD)
         TimingConstraint(level="Channel", preceding=["ACT"], following=["REFpb"], latency="nRRDS"),
 

@@ -1,5 +1,5 @@
 """A pending refresh holds back only the reads and writes it covers (JESD238 6.3.2.6: a per-bank refresh leaves
-accesses to other banks unaffected)."""
+accesses to other banks unaffected), and two per-bank refreshes are tRREFD apart."""
 import pytest
 
 import ramulator
@@ -62,3 +62,13 @@ def test_all_bank_refresh_holds_back_its_pseudo_channel_only():
     refab = first(dut, history, "REFab")
     assert first(dut, history, "ACT", PseudoChannel=1) < refab
     assert first(dut, history, "ACT", PseudoChannel=0) > refab
+
+
+def test_per_bank_refreshes_are_trrefd_apart():
+    dut = make_dut()
+    dut.priority_send("REFpb", dut.addr_vec(PseudoChannel=0, BankGroup=0, Bank=0, Row=dut.ALL, Column=dut.ALL))
+    dut.priority_send("REFpb", dut.addr_vec(PseudoChannel=0, BankGroup=1, Bank=0, Row=dut.ALL, Column=dut.ALL))
+    history = dut.run_until_idle(max_ticks=256)
+
+    dut.assert_commands(["REFpb", "REFpb"], history=history)
+    assert history[1].clk - history[0].clk >= dut.timings["nRREFD"]
