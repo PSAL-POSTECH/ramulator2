@@ -9,6 +9,8 @@ target_sources(
   scheduler/i_scheduler.h
   scheduler/impl/frfcfs.cpp
   scheduler/impl/frfcfs_rowhit.cpp
+  scheduler/impl/frfcfs_priorhit.cpp
+  scheduler/impl/frfcfs_gpgpusim.cpp
 
   refresh/i_refresh_manager.h
   refresh/impl/all_bank.cpp
