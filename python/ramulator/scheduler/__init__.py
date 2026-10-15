@@ -5,6 +5,8 @@
 # Regenerate:   python -m ramulator codegen
 ###############################################################################
 from .frfcfs import FRFCFS
+from .frfcfs_prior_hit import FRFCFSPriorHit
 from .frfcfs_row_hit import FRFCFSRowHit
+from .frfcfsgpgpu_sim import FRFCFSGPGPUSim
 
-__all__ = ['FRFCFS', 'FRFCFSRowHit']
+__all__ = ['FRFCFS', 'FRFCFSGPGPUSim', 'FRFCFSPriorHit', 'FRFCFSRowHit']
