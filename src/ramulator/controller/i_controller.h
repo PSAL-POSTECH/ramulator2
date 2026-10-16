@@ -31,9 +31,12 @@ class IController {
   virtual float get_tCK() const = 0;
 };
 
+// Holds its own count: TOGSim builds with _GLIBCXX_USE_CXX11_ABI=0, where std::list::size()
+// walks the list. enqueue() and remove() are the only writers of buffer.
 struct ReqBuffer {
   std::list<Request> buffer;
   size_t max_size;
+  size_t count = 0;
 
   explicit ReqBuffer(size_t max_size = 32) : max_size(max_size) {
   }
@@ -47,20 +50,22 @@ struct ReqBuffer {
   }
 
   size_t size() const {
-    return buffer.size();
+    return count;
   }
 
   bool enqueue(const Request& request) {
-    if (buffer.size() < max_size) {
+    if (count < max_size) {
       buffer.push_back(request);
+      ++count;
       return true;
     }
     return false;
   }
 
   bool enqueue(Request&& request) {
-    if (buffer.size() < max_size) {
+    if (count < max_size) {
       buffer.push_back(std::move(request));
+      ++count;
       return true;
     }
     return false;
@@ -68,6 +73,7 @@ struct ReqBuffer {
 
   void remove(iterator it) {
     buffer.erase(it);
+    --count;
   }
 };
 

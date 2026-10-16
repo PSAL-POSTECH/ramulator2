@@ -70,6 +70,20 @@ endif()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src)
 
+# For the library and its object libraries below, not yaml-cpp, fmt or the parent project:
+# calls between its own files bind inside it (no interposition through the PLT), and link-time
+# optimization inlines across those files. Neither changes what is simulated.
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+  add_compile_options(-fno-semantic-interposition)
+endif()
+include(CheckIPOSupported)
+check_ipo_supported(RESULT RAMULATOR_IPO OUTPUT RAMULATOR_IPO_MESSAGE LANGUAGES CXX)
+if(RAMULATOR_IPO)
+  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
+else()
+  message(STATUS "ramulator: no link-time optimization: ${RAMULATOR_IPO_MESSAGE}")
+endif()
+
 add_library(ramulator SHARED)
 set_target_properties(ramulator PROPERTIES
   LIBRARY_OUTPUT_DIRECTORY  ${PROJECT_SOURCE_DIR}
