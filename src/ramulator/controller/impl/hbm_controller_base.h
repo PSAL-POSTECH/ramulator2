@@ -28,6 +28,9 @@ class HBMControllerBase : public ControllerBase {
   }
 
   virtual bool slot_matches(const Request& req, SlotType slot) const;
+  // Whether a pending priority request (a refresh, an injected precharge) names `req`'s address: its -1 levels
+  // cover everything below them. A read or write waits only for the priority requests that cover it.
+  bool covered_by_priority(const Request& req) const;
 
   void hbm_tick_prologue();
   void hbm_tick_epilogue();
