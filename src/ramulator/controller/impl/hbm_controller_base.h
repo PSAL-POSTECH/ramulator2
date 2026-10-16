@@ -23,6 +23,8 @@ class HBMControllerBase : public ControllerBase {
     Clk_t clk = -1;
   };
 
+  int m_refresh_scope_levels = -1;
+
   HBMControllerBase(const ConfigNode& config, Implementation* parent)
       : ControllerBase(config, parent) {
   }
@@ -31,6 +33,9 @@ class HBMControllerBase : public ControllerBase {
   // Whether a pending priority request (a refresh, an injected precharge) names `req`'s address: its -1 levels
   // cover everything below them. A read or write waits only for the priority requests that cover it.
   bool covered_by_priority(const Request& req) const;
+  // Whether `req` would open a row beside a pending per-bank refresh: in its scope (the levels above the bank, its
+  // bank group and its SID), where each ACT pushes the refresh back by ACT-to-REFpb and a stream of them starves it.
+  bool opens_row_beside_refresh(const Request& req) const;
 
   void hbm_tick_prologue();
   void hbm_tick_epilogue();

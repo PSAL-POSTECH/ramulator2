@@ -7,6 +7,10 @@ namespace Ramulator {
 
 void HBMControllerBase::init() {
   init_base();
+  const auto& spec = *m_device.m_spec;
+  m_refresh_scope_levels = spec.has_level("Sid")         ? spec.get_level_id("Sid")
+                           : spec.has_level("BankGroup") ? spec.get_level_id("BankGroup")
+                                                         : m_bank_level;
 }
 
 void HBMControllerBase::setup(IFrontEnd* frontend, IMemorySystem* memory_system) {
@@ -55,6 +59,26 @@ bool HBMControllerBase::covered_by_priority(const Request& req) const {
   return false;
 }
 
+bool HBMControllerBase::opens_row_beside_refresh(const Request& req) const {
+  const auto& meta = m_device.m_spec->command_meta;
+  if (!meta[req.command].is_opening) {
+    return false;
+  }
+  for (const auto& p : m_priority_buffer.buffer) {
+    if (!meta[p.final_command].is_refreshing || p.addr_vec[m_bank_level] == -1) {
+      continue;
+    }
+    bool same_scope = true;
+    for (int l = 0; same_scope && l < m_refresh_scope_levels; l++) {
+      same_scope = p.addr_vec[l] == -1 || p.addr_vec[l] == req.addr_vec[l];
+    }
+    if (same_scope) {
+      return true;
+    }
+  }
+  return false;
+}
+
 std::optional<HBMControllerBase::IssuedCommand> HBMControllerBase::try_issue_slot(SlotType slot) {
   Candidate cand;
   if (slot == SlotType::ColumnBus) {
@@ -69,7 +93,7 @@ std::optional<HBMControllerBase::IssuedCommand> HBMControllerBase::try_issue_slo
   }
   if (!cand.valid) {
     cand = pick_rw_if([&](const Request& req) {
-      return slot_matches(req, slot) && !covered_by_priority(req);
+      return slot_matches(req, slot) && !covered_by_priority(req) && !opens_row_beside_refresh(req);
     });
   }
 
