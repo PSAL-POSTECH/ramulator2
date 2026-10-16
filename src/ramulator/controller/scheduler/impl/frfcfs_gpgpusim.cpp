@@ -7,12 +7,12 @@
 
 namespace Ramulator {
 
-// The row selection of GPGPU-Sim's frfcfs_scheduler (dram_sched.cc), and only that.
-// Each bank works on one selected row until no request for it is left, newly
-// arrived ones included; it then takes the open row if anything still hits it,
-// else the row of its oldest request. Which eligible request's command goes next
-// stays this controller's FRFCFS (ready first, then oldest): GPGPU-Sim's
-// column-first, dual-issue command loop belongs to its DRAM model (dram.cc).
+// GPGPU-Sim's FR-FCFS, as close as one command a cycle allows.
+// Row selection (dram_sched.cc): each bank keeps one row until no request for it
+// is left, newly arrived ones included, then takes the open row if anything still
+// hits it, else its oldest request's row. Command order (dram.cc): a ready column
+// command before a ready row command, then by age. Not taken: issuing one row and
+// one column command in the same cycle, which this controller cannot do.
 class FRFCFSGPGPUSimScheduler : public IScheduler, public Implementation {
   RAMULATOR_REGISTER_IMPLEMENTATION(IScheduler, FRFCFSGPGPUSimScheduler, "FRFCFS-GPGPUSim")
 
@@ -86,9 +86,10 @@ class FRFCFSGPGPUSimScheduler : public IScheduler, public Implementation {
       }
     }
 
-    // Pass 2: FRFCFS over the requests to a selected row.
+    // Pass 2: among requests to a selected row, a ready column command first,
+    // then any other ready command, then by age.
     auto candidate = buffer.end();
-    bool cand_timing_ok = false;
+    int cand_rank = -1;
     for (auto it = buffer.begin(); it != buffer.end(); it++) {
       const int bank = bank_of(*it);
       if (bank >= 0 && it->addr_vec[m_row_level] != sel[bank]) {
@@ -97,23 +98,23 @@ class FRFCFSGPGPUSimScheduler : public IScheduler, public Implementation {
       if (filter && !filter(*it)) {
         continue;
       }
-      if (candidate == buffer.end()) {
+      const int rank = rank_of(*it);
+      if (candidate == buffer.end() || rank > cand_rank ||
+          (rank == cand_rank && it->arrive < candidate->arrive)) {
         candidate = it;
-        cand_timing_ok = m_ctrl->check_timing(it->command, it->addr_vec);
-        continue;
-      }
-      bool it_timing_ok = m_ctrl->check_timing(it->command, it->addr_vec);
-      if (cand_timing_ok != it_timing_ok) {
-        if (it_timing_ok) {
-          candidate = it;
-          cand_timing_ok = true;
-        }
-      } else if (it->arrive < candidate->arrive) {
-        candidate = it;
+        cand_rank = rank;
       }
     }
 
     return candidate;
+  }
+
+  // 2: ready column command, 1: other ready command, 0: not ready.
+  int rank_of(const Request& req) const {
+    if (!m_ctrl->check_timing(req.command, req.addr_vec)) {
+      return 0;
+    }
+    return m_ctrl->m_device.m_spec->command_meta[req.command].is_accessing ? 2 : 1;
   }
 
   int bank_of(const Request& req) const {
